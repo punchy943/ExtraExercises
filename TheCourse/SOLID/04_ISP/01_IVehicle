@@ -1,0 +1,118 @@
+using System;
+using System.Collections.Generic;
+
+namespace SolidOefeningen.InterfaceSegregation
+{
+    // OEFENING: Interface Segregation Principle
+    //
+    // De onderstaande code compileert en werkt correct, zolang je enkel
+    // met Car werkt. De interface IVehicle stelt voor dat elk voertuig
+    // kan rijden, vliegen én varen.
+    //
+    // Het probleem: Car kan enkel rijden, maar is via IVehicle toch
+    // verplicht om Fly() en Sail() te implementeren. Omdat een auto niet
+    // kan vliegen of varen, gooien deze methodes gewoon een exception.
+    //
+    // Bekijk ook de methode StartAllVehicleJourneys: deze werkt met een
+    // lijst van IVehicle-objecten en roept op elk voertuig Drive(), Fly()
+    // én Sail() aan, omdat het type IVehicle dat nu eenmaal toelaat.
+    //
+    // OPDRACHT:
+    // Herwerk deze code zodat Car niet langer methodes moet implementeren
+    // (en "weigeren") die niet op een auto van toepassing zijn.
+    //
+    // Hints:
+    //   - Splits IVehicle op in kleinere, specifieke interfaces, bv.
+    //     IDrivable, IFlyable, ISailable
+    //   - Laat elke voertuigklasse enkel de interface(s) implementeren
+    //     die ze ook effectief kan waarmaken
+    //   - Pas StartAllVehicleJourneys aan zodat ze enkel de methode
+    //     aanroept die van toepassing is op elk type voertuig, zonder
+    //     ergens een "is dit een Car/Airplane/Boat?"-check nodig te
+    //     hebben
+    //   - Test je oplossing door zelf een nieuw voertuig toe te voegen
+    //     dat maar één van de drie vaardigheden heeft (bv. een
+    //     "Submarine" die enkel kan varen) en na te gaan of je nergens
+    //     een lege of foutgevende implementatie meer nodig hebt
+
+    public interface IVehicle
+    {
+        void Drive();
+        void Fly();
+        void Sail();
+    }
+
+    public class Car : IVehicle
+    {
+        public void Drive() => Console.WriteLine("De auto rijdt weg.");
+
+        public void Fly()
+        {
+            throw new NotSupportedException("Een auto kan niet vliegen.");
+        }
+
+        public void Sail()
+        {
+            throw new NotSupportedException("Een auto kan niet varen.");
+        }
+    }
+
+    public class Airplane : IVehicle
+    {
+        public void Drive()
+        {
+            throw new NotSupportedException("Een vliegtuig rijdt niet op de weg.");
+        }
+
+        public void Fly() => Console.WriteLine("Het vliegtuig stijgt op.");
+
+        public void Sail()
+        {
+            throw new NotSupportedException("Een vliegtuig kan niet varen.");
+        }
+    }
+
+    public class Boat : IVehicle
+    {
+        public void Drive()
+        {
+            throw new NotSupportedException("Een boot rijdt niet op de weg.");
+        }
+
+        public void Fly()
+        {
+            throw new NotSupportedException("Een boot kan niet vliegen.");
+        }
+
+        public void Sail() => Console.WriteLine("De boot vaart uit.");
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var vehicles = new List<IVehicle>
+            {
+                new Car(),
+                new Airplane(),
+                new Boat()
+            };
+
+            StartAllVehicleJourneys(vehicles);
+        }
+
+        // Deze methode gaat ervan uit dat elk voertuig kan rijden,
+        // vliegen én varen, simpelweg omdat het type IVehicle dat
+        // toelaat. In werkelijkheid crasht dit voor elk voertuig, op
+        // de ene vaardigheid na die het wél heeft.
+        public static void StartAllVehicleJourneys(List<IVehicle> vehicles)
+        {
+            foreach (var vehicle in vehicles)
+            {
+                vehicle.Drive();
+                vehicle.Fly();
+                vehicle.Sail();
+            }
+        }
+    }
+}

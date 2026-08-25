@@ -1,0 +1,131 @@
+using System;
+using System.Collections.Generic;
+
+namespace SolidOefeningen.LiskovSubstitution
+{
+    // OEFENING: Liskov Substitution Principle
+    //
+    // De onderstaande code compileert en werkt correct, zolang je enkel
+    // met SavingsAccount en CheckingAccount werkt. Ze stelt verschillende
+    // soorten bankrekeningen voor, die allemaal overerven van BankAccount.
+    //
+    // Het probleem zit bij FixedDepositAccount (een termijnrekening): geld
+    // opnemen vóór de vervaldatum is niet toegestaan, dus de methode
+    // Withdraw() gooit daar gewoon een exception. Dat lijkt logisch
+    // ("een termijnrekening is toch ook een soort bankrekening?"), maar
+    // het overtreedt het Liskov Substitution Principle: overal waar de
+    // code een BankAccount verwacht en Withdraw() aanroept, kan een
+    // FixedDepositAccount het programma laten crashen — terwijl de
+    // aanroepende code geen enkele reden heeft om dat te verwachten.
+    //
+    // Bekijk zeker ook de methode ProcessMonthlyWithdrawals: deze werkt
+    // met een lijst van BankAccount-objecten en verwacht dat Withdraw()
+    // altijd veilig aangeroepen kan worden.
+    //
+    // OPDRACHT:
+    // Herwerk deze klassenhiërarchie zodat FixedDepositAccount niet langer
+    // een methode moet "weigeren" die haar basisklasse belooft.
+    //
+    // Hints:
+    //   - Stel je de vraag: is "geld kunnen opnemen" een garantie die ELKE
+    //     bankrekening moet kunnen waarmaken, of enkel een deel ervan?
+    //   - Overweeg om Withdraw() niet meer in de basisklasse BankAccount
+    //     te plaatsen, maar in een aparte interface (bv. IWithdrawable)
+    //     die enkel geïmplementeerd wordt door rekeningen die ook echt
+    //     op elk moment geld laten opnemen
+    //   - BankAccount zou dan enkel nog het gedrag moeten bevatten dat
+    //     ECHT voor elke rekening geldt (bv. Deposit, GetBalance)
+    //   - Pas ProcessMonthlyWithdrawals aan zodat ze enkel werkt met
+    //     rekeningen die effectief opnames toelaten, zonder ergens een
+    //     "is dit een FixedDepositAccount?"-check nodig te hebben
+
+    public class BankAccount
+    {
+        public string Owner { get; set; }
+        protected double Balance { get; set; }
+
+        public BankAccount(string owner, double initialBalance)
+        {
+            Owner = owner;
+            Balance = initialBalance;
+        }
+
+        public virtual void Deposit(double amount)
+        {
+            Balance += amount;
+        }
+
+        public virtual void Withdraw(double amount)
+        {
+            if (amount > Balance)
+            {
+                throw new InvalidOperationException("Onvoldoende saldo.");
+            }
+
+            Balance -= amount;
+        }
+
+        public double GetBalance() => Balance;
+    }
+
+    public class SavingsAccount : BankAccount
+    {
+        public SavingsAccount(string owner, double initialBalance)
+            : base(owner, initialBalance)
+        {
+        }
+    }
+
+    public class CheckingAccount : BankAccount
+    {
+        public CheckingAccount(string owner, double initialBalance)
+            : base(owner, initialBalance)
+        {
+        }
+    }
+
+    // Een termijnrekening: geld staat vast tot de vervaldatum
+    public class FixedDepositAccount : BankAccount
+    {
+        public DateTime MaturityDate { get; }
+
+        public FixedDepositAccount(string owner, double initialBalance, DateTime maturityDate)
+            : base(owner, initialBalance)
+        {
+            MaturityDate = maturityDate;
+        }
+
+        public override void Withdraw(double amount)
+        {
+            throw new InvalidOperationException(
+                "Opnemen is niet toegestaan vóór de vervaldatum van een termijnrekening.");
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var accounts = new List<BankAccount>
+            {
+                new SavingsAccount("Sofie", 1000),
+                new CheckingAccount("Ben", 500),
+                new FixedDepositAccount("Yasmine", 5000, DateTime.Now.AddYears(1))
+            };
+
+            ProcessMonthlyWithdrawals(accounts, 100);
+        }
+
+        // Deze methode verwacht dat elke BankAccount veilig geld kan
+        // opnemen. Zodra de lijst een FixedDepositAccount bevat, crasht
+        // het programma - ook al deed de aanroeper hier niets fout.
+        public static void ProcessMonthlyWithdrawals(List<BankAccount> accounts, double amount)
+        {
+            foreach (var account in accounts)
+            {
+                account.Withdraw(amount);
+                Console.WriteLine($"{amount:C} opgenomen van rekening van {account.Owner}.");
+            }
+        }
+    }
+}

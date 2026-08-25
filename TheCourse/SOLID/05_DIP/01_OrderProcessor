@@ -1,0 +1,69 @@
+using System;
+
+namespace SolidOefeningen.DependencyInversion
+{
+    // OEFENING: Dependency Inversion Principle
+    //
+    // De onderstaande code compileert en werkt correct. Ze stelt een
+    // eenvoudig betalingsproces voor: OrderProcessor (de hooggeplaatste
+    // module, verantwoordelijk voor het afhandelen van een bestelling)
+    // gebruikt SqlServerPaymentGateway (een laaggeplaatste, technische
+    // module) om een betaling te verwerken.
+    //
+    // Het probleem: OrderProcessor maakt zelf, intern, een
+    // SqlServerPaymentGateway aan met "new". Hierdoor is OrderProcessor
+    // rechtstreeks gekoppeld aan één specifieke, technische
+    // implementatie. Wil je ooit overschakelen naar een andere
+    // betalingsprovider (bv. PayPal, Stripe, ...), of OrderProcessor
+    // unit testen zonder een echte betaling te moeten verwerken? Dan
+    // zit je vast, want er is geen enkele manier om die concrete
+    // implementatie te vervangen.
+    //
+    // OPDRACHT:
+    // Herwerk deze code zodat OrderProcessor niet langer rechtstreeks
+    // afhangt van SqlServerPaymentGateway, maar van een abstractie.
+    //
+    // Hints:
+    //   - Maak een interface, bv. IPaymentGateway, met een methode
+    //     ProcessPayment(double amount)
+    //   - Laat SqlServerPaymentGateway deze interface implementeren
+    //   - Geef de gewenste IPaymentGateway-implementatie door aan
+    //     OrderProcessor via de constructor, in plaats van ze intern
+    //     aan te maken met "new"
+    //   - Test je oplossing door zelf een nieuwe implementatie toe te
+    //     voegen (bv. "PayPalPaymentGateway" of een nepimplementatie
+    //     "FakePaymentGateway" voor testdoeleinden) en na te gaan dat
+    //     je OrderProcessor daarvoor NIET moet aanpassen
+
+    public class SqlServerPaymentGateway
+    {
+        public void ProcessPayment(double amount)
+        {
+            Console.WriteLine($"Betaling van {amount:C} verwerkt via SQL Server-integratie.");
+        }
+    }
+
+    public class OrderProcessor
+    {
+        private readonly SqlServerPaymentGateway _paymentGateway = new SqlServerPaymentGateway();
+
+        public void ProcessOrder(string customerName, double orderAmount)
+        {
+            Console.WriteLine($"Bestelling van {customerName} wordt verwerkt...");
+
+            _paymentGateway.ProcessPayment(orderAmount);
+
+            Console.WriteLine("Bestelling voltooid.");
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var orderProcessor = new OrderProcessor();
+
+            orderProcessor.ProcessOrder("Nora", 49.99);
+        }
+    }
+}

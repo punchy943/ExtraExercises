@@ -1,0 +1,99 @@
+using System;
+using System.IO;
+
+namespace SolidOefeningen.SingleResponsibility
+{
+    // OEFENING: Single Responsibility Principle
+    //
+    // De onderstaande code compileert en werkt correct. Elke methode doet
+    // precies wat ze zegt te doen. Toch heeft de klasse Employee meer dan
+    // één reden om te veranderen:
+    //
+    //   1. De regels voor het berekenen van het loon veranderen (business logica)
+    //   2. De manier waarop werknemersgegevens worden opgeslagen verandert (opslag)
+    //   3. De manier waarop loonbriefjes worden opgemaakt/afgedrukt verandert (weergave)
+    //
+    // OPDRACHT:
+    // Herwerk deze klasse zodat elke verantwoordelijkheid in zijn eigen
+    // klasse terechtkomt, en Employee zelf enkel nog verantwoordelijk is
+    // voor het bijhouden van werknemersgegevens en gedrag dat écht over
+    // "een werknemer zijn" gaat.
+    //
+    // Hints:
+    //   - Haal de loonberekening uit de klasse en stop ze in iets zoals IPayCalculator / SalaryCalculator
+    //   - Haal het opslaan naar bestand/database uit de klasse en stop het in iets zoals IEmployeeRepository
+    //   - Haal het afdrukken/opmaken uit de klasse en stop het in iets zoals IPayslipPrinter
+    //   - Employee zou uiteindelijk moeten afhangen van abstracties, in plaats van het werk zelf te doen
+
+    public class Employee
+    {
+        public string Name { get; set; }
+        public string Position { get; set; }
+        public double BaseMonthlySalary { get; set; }
+        public int OvertimeHours { get; set; }
+        public double OvertimeRatePerHour { get; set; }
+
+        public Employee(string name, string position, double baseMonthlySalary,
+            int overtimeHours, double overtimeRatePerHour)
+        {
+            Name = name;
+            Position = position;
+            BaseMonthlySalary = baseMonthlySalary;
+            OvertimeHours = overtimeHours;
+            OvertimeRatePerHour = overtimeRatePerHour;
+        }
+
+        // Verantwoordelijkheid #1: business logica (loonberekening)
+        public double CalculateMonthlyPay()
+        {
+            double overtimePay = OvertimeHours * OvertimeRatePerHour;
+            double totalPay = BaseMonthlySalary + overtimePay;
+
+            // Nog een extra "business regel" mee in de mix
+            if (Position == "Manager")
+            {
+                totalPay *= 1.10; // managers krijgen 10% bonus
+            }
+
+            return totalPay;
+        }
+
+        // Verantwoordelijkheid #2: opslag
+        public void SaveToFile(string filePath)
+        {
+            string line = $"{Name},{Position},{CalculateMonthlyPay():F2}";
+            File.AppendAllText(filePath, line + Environment.NewLine);
+        }
+
+        // Verantwoordelijkheid #3: weergave / rapportage
+        public void PrintPayslip()
+        {
+            Console.WriteLine("======================================");
+            Console.WriteLine($" Loonbriefje voor: {Name}");
+            Console.WriteLine($" Functie:          {Position}");
+            Console.WriteLine($" Basisloon:        {BaseMonthlySalary:C}");
+            Console.WriteLine($" Overuren:         {OvertimeHours}u @ {OvertimeRatePerHour:C}/u");
+            Console.WriteLine($" TOTAAL LOON:      {CalculateMonthlyPay():C}");
+            Console.WriteLine("======================================");
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var employee = new Employee(
+                name: "Alex Janssens",
+                position: "Manager",
+                baseMonthlySalary: 3200,
+                overtimeHours: 6,
+                overtimeRatePerHour: 25
+            );
+
+            employee.PrintPayslip();
+            employee.SaveToFile("payroll.csv");
+
+            Console.WriteLine("Loonbriefje afgedrukt en opgeslagen.");
+        }
+    }
+}

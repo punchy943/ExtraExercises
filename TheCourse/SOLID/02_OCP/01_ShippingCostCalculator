@@ -1,0 +1,72 @@
+using System;
+
+namespace SolidOefeningen.OpenClosed
+{
+    // OEFENING: Open/Closed Principle
+    //
+    // De onderstaande code compileert en werkt correct. Ze berekent de
+    // verzendkosten voor een pakket, afhankelijk van de gekozen
+    // verzendmethode. Toch overtreedt deze code het Open/Closed Principle:
+    // telkens er een nieuwe verzendmethode bijkomt, moet je de methode
+    // CalculateShippingCost aanpassen en een extra "else if"-tak toevoegen.
+    //
+    // De klasse is dus NIET gesloten voor wijziging: bestaande, al
+    // geteste code moet telkens opnieuw aangepast worden om nieuw gedrag
+    // toe te voegen.
+    //
+    // OPDRACHT:
+    // Herwerk deze code zodat een nieuwe verzendmethode toegevoegd kan
+    // worden ZONDER de klasse ShippingCostCalculator aan te passen.
+    //
+    // Hints:
+    //   - Maak een interface, bv. IShippingMethod, met een methode
+    //     CalculateCost(double weightInKg)
+    //   - Maak voor elke bestaande verzendmethode (Standard, Express,
+    //     Overnight) een eigen klasse die deze interface implementeert
+    //   - ShippingCostCalculator zou enkel nog moeten werken via de
+    //     interface, zonder te weten welke concrete verzendmethode
+    //     gebruikt wordt
+    //   - Test je oplossing door zelf een nieuwe verzendmethode toe te
+    //     voegen (bv. "InternationalShippingMethod") zonder ergens
+    //     bestaande code te moeten wijzigen
+
+    public class ShippingCostCalculator
+    {
+        public double CalculateShippingCost(string shippingMethod, double weightInKg)
+        {
+            if (shippingMethod == "Standard")
+            {
+                return weightInKg * 1.50;
+            }
+            else if (shippingMethod == "Express")
+            {
+                return weightInKg * 3.00 + 5.00;
+            }
+            else if (shippingMethod == "Overnight")
+            {
+                return weightInKg * 5.00 + 15.00;
+            }
+
+            throw new ArgumentException($"Onbekende verzendmethode: {shippingMethod}");
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var calculator = new ShippingCostCalculator();
+
+            double weight = 4.5;
+
+            double standardCost = calculator.CalculateShippingCost("Standard", weight);
+            double expressCost = calculator.CalculateShippingCost("Express", weight);
+            double overnightCost = calculator.CalculateShippingCost("Overnight", weight);
+
+            Console.WriteLine($"Pakket van {weight} kg:");
+            Console.WriteLine($" - Standard:  €{standardCost:F2}");
+            Console.WriteLine($" - Express:   €{expressCost:F2}");
+            Console.WriteLine($" - Overnight: €{overnightCost:F2}");
+        }
+    }
+}
